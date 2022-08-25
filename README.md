@@ -6,8 +6,14 @@ The model which was taken from hugging face was fine tuned on the bbc-text datas
 
 # Pruning the trained model
 The Textpruner library(https://github.com/airaria/TextPruner/) was used to prune the trained model to decrease it's size and to also increase infernece speed, keeping the accuracy as close as possible to the unpruned model. The model pruning is implemented in prune.py script and this script also displays the results(model size, inference time, accuracy) before and after pruning. 
+
+# Steps to recreate the results
+1. Run the make_dataset_split.py to create the train/valid/test split.
+2. Run the train.py script to train the model. The model and tokenizer will be saved inside ./saved_model
+3. Run the prune.py script to prune the trained model inside ./saved_model and the pruned models will be saved inside ./pruned_models. This script will also visualize the results of before and after pruning.
+
 # Resources 
--> https://aclanthology.org/2022.acl-demo.4/ (link of the paper of TextPruner)
--> https://github.com/airaria/TextPruner/
--> https://blog.51cto.com/u_14156307/5274012
--> https://zhuanlan.zhihu.com/p/469103382
+* https://aclanthology.org/2022.acl-demo.4/ (link of the paper of TextPruner)
+* https://github.com/airaria/TextPruner/
+* https://blog.51cto.com/u_14156307/5274012
+* https://zhuanlan.zhihu.com/p/469103382
