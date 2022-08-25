@@ -12,6 +12,9 @@ The Textpruner library(https://github.com/airaria/TextPruner/) was used to prune
 2. Run the train.py script to train the model. The model and tokenizer will be saved inside ./saved_model
 3. Run the prune.py script to prune the trained model inside ./saved_model and the pruned models will be saved inside ./pruned_models. This script will also visualize the results of before and after pruning.
 
+# Detailed explanation of how pruning and textpruner works
+* https://docs.google.com/document/d/1WI9r3kFv_USbSU2XrAj426wG78OjKS1yjbLr2TXa-rE/edit?usp=sharing
+
 # Resources 
 * https://aclanthology.org/2022.acl-demo.4/ (link of the paper of TextPruner)
 * https://github.com/airaria/TextPruner/
