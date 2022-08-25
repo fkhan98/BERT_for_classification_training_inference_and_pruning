@@ -7,20 +7,21 @@ import os
 
 from tqdm import tqdm
 from dataset import Dataset
-from model import BertClassifier
+from bert_classifier import BertClassifier
 from transformers import BertConfig
+from transformers import BertTokenizer
 
-def train(model, train_data, val_data, learning_rate, epochs):
+def train(model, train_data, val_data, learning_rate, epochs, batch_size):
 
-    train, val = Dataset(train_data), Dataset(val_data)
+    train, val = Dataset(train_data,'not_prune'), Dataset(val_data,'not_prune')
 
-    train_dataloader = torch.utils.data.DataLoader(train, batch_size=2, shuffle=True)
-    val_dataloader = torch.utils.data.DataLoader(val, batch_size=2)
+    train_dataloader = torch.utils.data.DataLoader(train, batch_size=batch_size, shuffle=True)
+    val_dataloader = torch.utils.data.DataLoader(val, batch_size=batch_size)
 
     use_cuda = torch.cuda.is_available()
     device = torch.device("cuda" if use_cuda else "cpu")
 
-    criterion = torch.nn.CrossEntropyLoss()
+    # criterion = torch.nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr= learning_rate)
 
     if use_cuda:
@@ -28,6 +29,7 @@ def train(model, train_data, val_data, learning_rate, epochs):
             model = model.cuda()
             criterion = criterion.cuda()
 
+    best_loss = sys.maxsize
     for epoch_num in range(epochs):
 
             total_acc_train = 0
@@ -40,12 +42,12 @@ def train(model, train_data, val_data, learning_rate, epochs):
                 mask = train_input['attention_mask'].to(device)
                 input_id = train_input['input_ids'].squeeze(1).to(device)
 
-                output = model(input_id, mask)
+                output = model(input_id, mask, train_label)
                 
-                batch_loss = criterion(output, train_label.long())
+                batch_loss = output.loss
                 total_loss_train += batch_loss.item()
                 
-                acc = (output.argmax(dim=1) == train_label).sum().item()
+                acc = (output.logits.argmax(dim=1) == train_label).sum().item()
                 total_acc_train += acc
 
                 model.zero_grad()
@@ -55,7 +57,6 @@ def train(model, train_data, val_data, learning_rate, epochs):
             total_acc_val = 0
             total_loss_val = 0
 
-            best_loss = sys.maxsize
             model.eval() 
             with torch.no_grad():
 
@@ -65,12 +66,12 @@ def train(model, train_data, val_data, learning_rate, epochs):
                     mask = val_input['attention_mask'].to(device)
                     input_id = val_input['input_ids'].squeeze(1).to(device)
 
-                    output = model(input_id, mask)
+                    output = model(input_id, mask, val_label)
 
-                    batch_loss = criterion(output, val_label.long())
+                    batch_loss = output.loss
                     total_loss_val += batch_loss.item()
                     
-                    acc = (output.argmax(dim=1) == val_label).sum().item()
+                    acc = (output.logits.argmax(dim=1) == val_label).sum().item()
                     total_acc_val += acc
                
                 path = './saved_model'
@@ -79,9 +80,9 @@ def train(model, train_data, val_data, learning_rate, epochs):
                     os.makedirs(path)
                 
                 # save_path = os.path.join(path,'best_model.pt')
-                if total_loss_val < best_loss:
-                    best_loss = total_loss_val
-                    print('validation loss decreased, model being saved')
+                if (total_loss_val / len(val_data)) < best_loss:
+                    print(f'validation loss decreased from {best_loss} to {total_loss_val / len(val_data)}, model being saved')
+                    best_loss = total_loss_val / len(val_data)
                     model.save_pretrained(path)
                     # torch.save(model.state_dict(), save_path)
                     
@@ -92,16 +93,16 @@ def train(model, train_data, val_data, learning_rate, epochs):
                 | Val Loss: {total_loss_val / len(val_data): .3f} \
                 | Val Accuracy: {total_acc_val / len(val_data): .3f}')
             
-EPOCHS = 1
+EPOCHS = 11
 config = BertConfig.from_json_file('./config.json')
 model = BertClassifier(config = config)
 LR = 1e-6
-# np.random.seed(112)
-df = pd.read_csv('./bbc-text.csv') 
-print(df)
-df_train, df_val, df_test = np.split(df.sample(frac=1, random_state=42), 
-                                     [int(.8*len(df)), int(.9*len(df))])
+batch_size = 32
 
-print(len(df_train),len(df_val), len(df_test))
+df_train = pd.read_csv('./train.csv') 
+df_val = pd.read_csv('./validation.csv') 
     
-train(model, df_train, df_val, LR, EPOCHS)
+train(model, df_train, df_val, LR, EPOCHS, batch_size)
+##saving tokenizer
+tokenizer = BertTokenizer.from_pretrained('bert-base-cased')
+tokenizer.save_pretrained("./saved_model")

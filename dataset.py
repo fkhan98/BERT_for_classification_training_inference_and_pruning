@@ -12,13 +12,13 @@ labels = {'business':0,
 
 class Dataset(torch.utils.data.Dataset):
 
-    def __init__(self, df):
+    def __init__(self, df, flag = None):
 
         self.labels = [labels[label] for label in df['category']]
         self.texts = [tokenizer(text, 
                                padding='max_length', max_length = 512, truncation=True,
                                 return_tensors="pt") for text in df['text']]
-
+        self.flag = flag
     def classes(self):
         return self.labels
 
@@ -38,5 +38,8 @@ class Dataset(torch.utils.data.Dataset):
         batch_texts = self.get_batch_texts(idx)
         batch_y = self.get_batch_labels(idx)
 
-        return {'input_ids': batch_texts['input_ids'][0], 'attention_mask': batch_texts['attention_mask'][0], 'labels': batch_y}
-        # return batch_texts, batch_y
+        if self.flag == 'not_prune':
+            return batch_texts, batch_y
+        else:
+            return {'input_id': batch_texts['input_ids'][0], 'mask': batch_texts['attention_mask'][0], 'label': batch_y}
+        
