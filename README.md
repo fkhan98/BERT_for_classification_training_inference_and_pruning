@@ -14,6 +14,7 @@ The Textpruner library(https://github.com/airaria/TextPruner/) was used to prune
 
 # Detailed explanation of how pruning and textpruner works
 * https://docs.google.com/document/d/1WI9r3kFv_USbSU2XrAj426wG78OjKS1yjbLr2TXa-rE/edit?usp=sharing
+* The documentation file for how pruning and textpruner works can also be found in ./docs/pruning and textpruner.pdf
 
 # Resources 
 * https://aclanthology.org/2022.acl-demo.4/ (link of the paper of TextPruner)
